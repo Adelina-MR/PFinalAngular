@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" ng-app="Auth_app">
 <head>
     <meta charset="utf-8">
     <meta name="description" content="Formulario de introducción de datos iniciales">
@@ -7,8 +7,11 @@
 
     <title>Log In</title>
     <link rel="icon" href="/img/1678126487.ico" type="image/png">
-    
     <link rel="stylesheet" href="/css/Login_stye.css">
+
+    <script src="/js/angular.min.js"></script>
+    <script src="/js/angular-route.min.js"></script>
+    <script src="/js/Controller.js"></script>
 
 </head>
 <body>
@@ -16,14 +19,14 @@
         <h2>Login</h2>
         <form id= "log-form"> 
             <div class="User">
-                <input type="email" placeholder="Correo Electrónico" maxlength="25" required>
+                <input type="email" placeholder="Correo Electrónico" maxlength="25" ng-model="user" required>
                 <label for="Usuario"></label>
             </div>
             <div class="Pass">
-                <input type="password" placeholder="Contraseña" maxlength="25" required>
+                <input type="password" placeholder="Contraseña" maxlength="25" ng-model="passwd" required>
                 <label for="Contraseña"></label>
             </div>
-            <button type="submit" name="enviar"> <!--Conjunto de spans para hacer un botón bailongo-->
+            <button type="submit" ng-click= "register()" name="enviar"> <!--Conjunto de spans para hacer un botón bailongo-->
                 <span></span>
                 <span></span>
                 <span></span>
@@ -32,6 +35,6 @@
             </button>
         </form>
     </main>
-    <script src="/js/Autentication.js"></script>
+    <!--<script src="/js/Autentication.js"></script>-->
 </body>
 </html>

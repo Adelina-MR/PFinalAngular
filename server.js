@@ -39,7 +39,9 @@ const router = express.Router();
 // cargar el módulo para bases de datos SQLite
 var sqlite3 = require('sqlite3').verbose();
 
+//----------------------------------------------------------------------------------------------------------------------------------------
 // Abrir nuestra base de datos
+
 var db = new sqlite3.Database(
     'Database.db',    // nombre del fichero de base de datos
     (err) => { // funcion que será invocada con el resultado
@@ -47,19 +49,41 @@ var db = new sqlite3.Database(
             console.log(err);  // Mostrarlo por la consola del servidor
     }
 );
+//----------------------------------------------------------------------------------------------------------------------------------------
+function processLogin(req, res, db) {
+    var correo = req.body.user;
+    var password = req.body.passwd;
 
-function generarToken(login, passwd) {
-    db.get('SELECT * FROM users WHERE login=? AND passwd=?', [login, passwd], (err, row) => {
-        if (row) {
-          // Los campos coinciden, genera el token
-          const token = jwt.sign({ login: row.login, id: row.id }, 'clave_secreta_del_token');
-          // Devuelve el token
-          res.json({ token });
-        } else {
-          // Los campos no coinciden
-          res.json({ errormsg: 'Credenciales inválidas' });
+    db.get(
+        // consulta y parámetros cuyo valor será usado en los '?'
+        'SELECT * FROM users WHERE correo=?', correo,
+        // funcion que se invocará con los datos obtenidos de la base de datos
+        (err, row) => {
+            if (row == undefined) {
+                // La consulta no devuelve ningun dato -: no existe el usuario
+                res.json({ errormsg: 'El usuario no existe'});
+            } else if (row.password === password) {
+                // La contraseña es correcta
+                // Asociar el userID a los datos de la sesión
+                req.session.userID = row.id; // solo el id del usuario registrado
+
+                // Preparar los datos a enviar al navegador (AngularJS)
+                var data = {
+                    uid: row.uid,
+                    correo: row.correo,
+                    nombre: row.nombre,
+                    password: row.password,
+                    rol: row.rol
+                };
+
+                // enviar en la respuesta serializado en formato JSON
+                res.json(data);
+            } else {
+                // La contraseña no es correcta, -: enviar este otro mensaje
+                res.json({ errormsg: 'Fallo de autenticación'});
+            }
         }
-      });
+    );
 }
 
 function verificarUsuario(req) {
@@ -75,6 +99,15 @@ router.get('/login', (req, res) => {
     res.sendFile(filePath);
 });
 
+// Ruta para mostrar el archivo Login.html cuando se acceda a la raíz
+router.get('/', (req, res) => {
+    // Obtener la ruta completa del archivo Login.html
+    const filePath = 'C:\\Users\\Adelina\\Desktop\\Universidad\\4ºAÑO\\Laboratorio de Ingeniería de Software\\Practica3_Angular\\html\\Login.html';
+
+    // Enviar el archivo como respuesta al cliente
+    res.sendFile(filePath);
+});
+
 // Ahora la acción asociada al login sería:
 router.post('/login', (req, res) => {
     // Comprobar si la petición contiene los campos ('user' y 'passwd')
@@ -82,10 +115,12 @@ router.post('/login', (req, res) => {
         res.json({ errormsg: 'Peticion mal formada'});
     } else {
         // La petición está bien formada -> procesarla
-        generarToken(req.body.user, req.body.passwd);
+        processLogin(req, res, db);
     }
 });
 
+
+//----------------------------------------------------------------------------------------------------------------------------------------
 // Añadir las rutas al servidor
 server.use('/', router);
 

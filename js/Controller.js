@@ -27,23 +27,44 @@ angular.module('Auth_app',['ngRoute']).factory('AuthService',($http) => {
   }).otherwise({
     redirectTo: '/'
   })
-}).controller('LoginController', function($scope, $location, USER){
-  $scope.registered = false;
-  $scope.user = "";
-  $scope.passwd = "";
+}).controller('LoginController', function($scope, $location, AuthService){
+  $scope.username = "";
+  $scope.password = "";
 
-  $scope.register = () =>{
-    USER.login($scope.user, $scope.passwd)
+  $scope.register = () => {
+    console.log("Correo electrónico:", $scope.username);
+    console.log("Contraseña:", $scope.password);
+    
+    AuthService.login($scope.username, $scope.password)
       .then(function(response){
-        $scope.registered = response.data.id != undefined;
-        if($scope.registered){
-          $scope.userdata = response.data;
+        // Aquí se maneja la respuesta de la solicitud
+        console.log(response.data); // Mostrar la respuesta en la consola
+        
+        if (response.data.session_id) {
+          // Redirigir a la página index2.html
           $location.path('/index2.html');
         }
+
+      })
+      .catch(function(error){
+        console.error(error); // Mostrar errores en la consola
+        // Resto del código para manejar los errores según sea necesario
       });
-      $scope.unregister = () =>{
-        $scope.registered = false;
-        USER.logout();
-      };
-  }
-})
+    
+    // Resto del código
+    $scope.username = "";
+    $scope.password = "";
+  };
+
+  $scope.unregister = () => {
+    $scope.registered = false;
+    AuthService.logout();
+  };
+});
+
+
+
+
+
+
+

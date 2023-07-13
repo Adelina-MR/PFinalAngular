@@ -50,7 +50,39 @@ var db = new sqlite3.Database(
     }
 );
 //----------------------------------------------------------------------------------------------------------------------------------------
+
+// Ruta para mostrar el archivo Login.html
+router.get('/login', (req, res) => {
+    // Obtener la ruta completa del archivo Login.html
+    const filePath = path.join(__dirname, 'html', 'Login.html');
+
+    // Enviar el archivo como respuesta al cliente
+    res.sendFile(filePath);
+});
+
+// Ruta para mostrar el archivo Login.html cuando se acceda a la raíz
+router.get('/', (req, res) => {
+    // Obtener la ruta completa del archivo Login.html
+    const filePath = path.join(__dirname, 'html', 'Login.html');
+
+    // Enviar el archivo como respuesta al cliente
+    res.sendFile(filePath);
+});
+
+// Ahora la acción asociada al login sería:
+router.post('/login', (req, res) => {
+    // Comprobar si la petición contiene los campos ('user' y 'passwd')
+    if (!req.body.user || !req.body.passwd) {
+        res.status(400).json({ errormsg: 'Petición mal formada' });
+    } else {
+        // La petición está bien formada -> procesarla
+        processLogin(req, res, db);
+    }
+});
+
 function processLogin(req, res, db) {
+    console.log('Procesando el REQUEST del login',req.body);
+
     var correo = req.body.user;
     var password = req.body.passwd;
 
@@ -61,65 +93,40 @@ function processLogin(req, res, db) {
         (err, row) => {
             if (row == undefined) {
                 // La consulta no devuelve ningun dato -: no existe el usuario
-                res.json({ errormsg: 'El usuario no existe'});
+                res.status(401).json({ errormsg: 'El usuario no existe' });
             } else if (row.password === password) {
                 // La contraseña es correcta
-                // Asociar el userID a los datos de la sesión
-                req.session.userID = row.id; // solo el id del usuario registrado
-
-                // Preparar los datos a enviar al navegador (AngularJS)
-                var data = {
-                    uid: row.uid,
-                    correo: row.correo,
-                    nombre: row.nombre,
-                    password: row.password,
-                    rol: row.rol
+                // Generar un identificador de sesión único
+                var sessionID = generateSessionID();
+                // Asociar el sessionID a los datos de la sesión
+                req.session.sessionID = sessionID;
+                // Preparar la respuesta con el sessionID
+                var response = {
+                    session_id: sessionID
                 };
-
-                // enviar en la respuesta serializado en formato JSON
-                res.json(data);
+                // Enviar la respuesta como JSON
+                res.json(response);
             } else {
                 // La contraseña no es correcta, -: enviar este otro mensaje
-                res.json({ errormsg: 'Fallo de autenticación'});
+                res.status(401).json({ errormsg: 'Fallo de autenticación' });
             }
         }
     );
 }
 
-function verificarUsuario(req) {
-    return req.session.userID != undefined;
+// Función para generar un identificador de sesión único
+function generateSessionID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (Math.random() * 16) | 0,
+            v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
 }
 
-// Ruta para mostrar el archivo Login.html
-router.get('/login', (req, res) => {
-    // Obtener la ruta completa del archivo Login.html
-    const filePath = 'C:\\Users\\Adelina\\Desktop\\Universidad\\4ºAÑO\\Laboratorio de Ingeniería de Software\\Practica3_Angular\\html\\Login.html';
-
-    // Enviar el archivo como respuesta al cliente
-    res.sendFile(filePath);
-});
-
-// Ruta para mostrar el archivo Login.html cuando se acceda a la raíz
-router.get('/', (req, res) => {
-    // Obtener la ruta completa del archivo Login.html
-    const filePath = 'C:\\Users\\Adelina\\Desktop\\Universidad\\4ºAÑO\\Laboratorio de Ingeniería de Software\\Practica3_Angular\\html\\Login.html';
-
-    // Enviar el archivo como respuesta al cliente
-    res.sendFile(filePath);
-});
-
-// Ahora la acción asociada al login sería:
-router.post('/login', (req, res) => {
-    // Comprobar si la petición contiene los campos ('user' y 'passwd')
-    if (!req.body.user || !req.body.passwd) {
-        res.json({ errormsg: 'Peticion mal formada'});
-    } else {
-        // La petición está bien formada -> procesarla
-        processLogin(req, res, db);
-    }
-});
-
-
+server.use((req, res, next) => {
+    console.log('Received request:', req.method, req.url);
+    next();
+  });
 //----------------------------------------------------------------------------------------------------------------------------------------
 // Añadir las rutas al servidor
 server.use('/', router);
@@ -127,9 +134,15 @@ server.use('/', router);
 // Añadir las rutas estáticas al servidor.
 server.use(express.static('.'));
 
+server.use(express.static(path.join(__dirname, 'html')));
 server.use(express.static(path.join(__dirname, 'js')));
 server.use(express.static(path.join(__dirname, 'css')));
-server.use(express.static(path.join(__dirname, 'html')));
+server.use(express.static(path.join(__dirname, 'img')));
+
+server.use((req, res, next) => {
+    console.log('Received request:', req.method, req.url);
+    next();
+});
 
 // Poner en marcha el servidor ...
 server.listen(port, () => {

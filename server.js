@@ -86,6 +86,20 @@ router.post('/login', (req, res) => {
     }
 });
 
+// Ruta para obtener el nombre de usuario
+router.get('/getUsername', (req, res) => {
+    // Verificar si el usuario ha iniciado sesión
+    if (!req.session.sessionID) {
+      res.status(401).json({ errormsg: 'No se ha iniciado sesión' });
+    } else {
+      // Obtener el nombre de usuario asociado al sessionID
+      var username = getUsernameFromSessionID(req.session.sessionID);
+      // Enviar el nombre de usuario como respuesta
+      res.json({ nombre: username });
+    }
+  });
+  
+
 function processLogin(req, res, db) {
     console.log('Procesando el REQUEST del login',req.body);
 
@@ -101,6 +115,7 @@ function processLogin(req, res, db) {
                 // La consulta no devuelve ningun dato -: no existe el usuario
                 res.status(401).json({ errormsg: 'El usuario no existe' });
             } else if (row.password === password) {
+                var nombre = row.nombre;
                 // La contraseña es correcta
                 // Generar un identificador de sesión único
                 var sessionID = generateSessionID();
@@ -108,6 +123,7 @@ function processLogin(req, res, db) {
                 req.session.sessionID = sessionID;
                 // Preparar la respuesta con el sessionID
                 var response = {
+                    nombre: nombre,
                     session_id: sessionID
                 };
                 // Enviar la respuesta como JSON

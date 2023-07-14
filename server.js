@@ -31,7 +31,11 @@ const bodyParser = require('body-parser');
 
 // Configuring express to use body-parser as middle-ware.
 server.use(bodyParser.urlencoded({ extended: false }));
+// Configurando body-parser para analizar datos JSON
 server.use(bodyParser.json());
+
+// Configurando body-parser para analizar datos codificados en url-encoded
+server.use(bodyParser.urlencoded({ extended: true }));
 
 // Obtener el configurador de rutas
 const router = express.Router();
@@ -73,8 +77,10 @@ router.get('/', (req, res) => {
 router.post('/login', (req, res) => {
     // Comprobar si la petición contiene los campos ('user' y 'passwd')
     if (!req.body.user || !req.body.passwd) {
-        res.status(400).json({ errormsg: 'Petición mal formada' });
+        res.status(400).json;
     } else {
+        console.log('Solicitud POST recibida en /login');
+        console.log('Datos de la solicitud:', req.body);
         // La petición está bien formada -> procesarla
         processLogin(req, res, db);
     }
@@ -123,13 +129,12 @@ function generateSessionID() {
     });
 }
 
-server.use((req, res, next) => {
-    console.log('Received request:', req.method, req.url);
-    next();
-  });
+
 //----------------------------------------------------------------------------------------------------------------------------------------
 // Añadir las rutas al servidor
 server.use('/', router);
+server.use('/img', express.static(path.join(__dirname, 'img')));
+
 
 // Añadir las rutas estáticas al servidor.
 server.use(express.static('.'));

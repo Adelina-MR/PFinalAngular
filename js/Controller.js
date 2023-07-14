@@ -21,13 +21,19 @@ angular.module('Auth_app',['ngRoute']).factory('AuthService',($http) => {
   return USER;
 
 }).config(function($routeProvider){
-  $routeProvider.when('/', {
-    controller: 'LoginController',
-    templateUrl: 'Login.html'
-  }).otherwise({
-    redirectTo: '/'
-  })
-}).controller('LoginController', function($scope, $location, AuthService){
+  $routeProvider
+    .when('/', {
+      controller: 'LoginController',
+      templateUrl: 'Login.html'
+    })
+    .when('/index2', {
+      controller: 'Index2Controller',
+      templateUrl: 'index2.html'
+    })
+    .otherwise({
+      redirectTo: '/'
+    });
+}).controller('LoginController', function($scope, $window,  AuthService){
   $scope.username = "";
   $scope.password = "";
 
@@ -38,11 +44,11 @@ angular.module('Auth_app',['ngRoute']).factory('AuthService',($http) => {
     AuthService.login($scope.username, $scope.password)
       .then(function(response){
         // Aquí se maneja la respuesta de la solicitud
-        console.log(response.data); // Mostrar la respuesta en la consola
+        console.log("Respuesta : ", response.data); // Mostrar la respuesta en la consola
         
         if (response.data.session_id) {
           // Redirigir a la página index2.html
-          $location.path('/index2.html');
+          $window.location.href = '/index2.html';
         }
 
       })
@@ -54,6 +60,8 @@ angular.module('Auth_app',['ngRoute']).factory('AuthService',($http) => {
     // Resto del código
     $scope.username = "";
     $scope.password = "";
+
+    return false;
   };
 
   $scope.unregister = () => {
